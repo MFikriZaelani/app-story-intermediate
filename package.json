@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "esbuild": "^0.25.5",
     "vite": "^6.2.0",
     "vite-plugin-static-copy": "^3.0.2"
   },
