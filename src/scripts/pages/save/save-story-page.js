@@ -171,7 +171,7 @@ export default class SavePage {
                 <p class="photo-description">${truncatedDesc}</p>
               </div>
               <div style="margin-left: 10px;">
-                <img src="public/images/save-full.png" 
+                <img src="images/save-full.png" 
                      class="save-icon icon-save" 
                      data-id="${photo.id}" 
                      style="width: 40px; cursor: pointer;" 

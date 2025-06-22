@@ -28,7 +28,7 @@ const SwRegister = {
   async _registerServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js", {
-        type: "classic",
+        type: "module",
         scope: "/",
       });
 

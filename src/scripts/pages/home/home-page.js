@@ -182,7 +182,7 @@ export default class HomePage {
       .map((story) => {
         const isSaved = savedPhotos.some((item) => item.id === story.id);
         const iconSrc = isSaved
-          ? "public/images/save-full.png"
+          ? "images/save-full.png"
           : "images/save.png";
         const iconAlt = isSaved ? "Cerita telah disimpan" : "Simpan cerita";
         const ariaLabel = isSaved
@@ -264,13 +264,13 @@ export default class HomePage {
           if (isAlreadySaved) {
             // 🔴 Hapus dari penyimpanan
             await removePhotoFromSave(story.id);
-            img.src = "public/images/save.png";
+            img.src = "images/save.png";
             img.alt = "Simpan cerita";
             btn.setAttribute("aria-label", `Simpan cerita ${story.name}`);
           } else {
             // ✅ Simpan ke penyimpanan
             await savePhotoToSavedPhotos(story);
-            img.src = "public/images/save-full.png";
+            img.src = "images/save-full.png";
             img.alt = "Cerita telah disimpan";
             btn.setAttribute(
               "aria-label",
