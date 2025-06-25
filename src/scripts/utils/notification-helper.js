@@ -117,6 +117,8 @@ export async function subscribeUserToPushNotifications() {
     const permissionResult = await requestNotificationPermission();
 
     if (permissionResult.error || permissionResult.permission !== "granted") {
+      showFloatingMessage("✅ Notifikasi berhasil diaktifkan", "success");
+      showFloatingMessage("❌ Notifikasi tidak diaktifkan.", "error");
       return {
         error: true,
         message: "Permission denied for notifications",
@@ -170,6 +172,8 @@ export async function unsubscribeUserFromPushNotifications() {
 
     if (!subscription) {
       removeSubscriptionFromStorage();
+      showFloatingMessage("🔕 Notifikasi berhasil dimatikan", "default");
+
       return { error: false, message: "No subscription found to unsubscribe" };
     }
 
