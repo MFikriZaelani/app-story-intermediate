@@ -19,8 +19,8 @@ export default defineConfig({
     VitePWA({
       strategies: "injectManifest",
       injectRegister: false, // Jangan inject auto register, kamu pakai manual
-      srcDir: "scripts",     // Ini direktori tempat sw.js berada (relatif ke root)
-      filename: "sw.js",     // Nama file SW di dalam dist/
+      srcDir: "scripts", // Ini direktori tempat sw.js berada (relatif ke root)
+      filename: "sw.js", // Nama file SW di dalam dist/
       includeAssets: ["favicon.ico", "images/*.png", "manifest.json"],
       manifest: {
         name: "Story App",

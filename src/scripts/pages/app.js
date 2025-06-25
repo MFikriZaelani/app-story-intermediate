@@ -3,7 +3,13 @@ import routes from "../routes/routes";
 import { getActiveRoute, parseActivePathname } from "../routes/url-parser.js";
 import { getAuth, isAuthenticated } from "../utils/auth-service.js";
 import { applyPageTransition } from "../utils/index.js";
-import NotificationHelper from "../utils/notification-helper.js";
+import {
+  initNotificationButton,
+  requestNotificationPermission,
+  showNotification,
+  updateNotificationButtonState,
+} from "../utils/notification-helper.js";
+
 import SwRegister from "../utils/sw-register.js";
 
 class App {
@@ -27,7 +33,7 @@ class App {
   async init() {
     try {
       // Inisialisasi notifikasi
-      await NotificationHelper.initButton();
+      await initNotificationButton();
       console.log("Initializing app...");
       await SwRegister.init();
       console.log("Service Worker initialization complete");

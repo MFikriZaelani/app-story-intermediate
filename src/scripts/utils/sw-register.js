@@ -1,6 +1,5 @@
 // src/scripts/utils/sw-register.js
 import config from "../config";
-import { subscribeNotification } from "../data/api";
 
 const SwRegister = {
   async init() {
@@ -11,7 +10,7 @@ const SwRegister = {
 
     try {
       await this._registerServiceWorker();
-      await this._requestNotificationPermission();
+      // ⚠️ Jangan panggil _subscribePushMessage di sini agar tidak munculkan popup otomatis
     } catch (error) {
       console.error("Gagal init service worker:", error);
     }
@@ -32,10 +31,6 @@ const SwRegister = {
         scope: "/",
       });
 
-      if (registration.active) {
-        await this._subscribePushMessage(registration);
-      }
-
       console.log("Service worker berhasil diregistrasi:", registration);
       return registration;
     } catch (error) {
@@ -43,26 +38,12 @@ const SwRegister = {
     }
   },
 
-  async _requestNotificationPermission() {
-    const result = await Notification.requestPermission();
-
-    if (result === "denied") {
-      throw new Error("Notifikasi tidak diizinkan");
-    }
-
-    if (result === "default") {
-      throw new Error("Pengguna menutup kotak dialog permintaan izin");
-    }
-
-    return result;
-  },
-
   async _subscribePushMessage(registration) {
     try {
       const subscribed = await registration.pushManager.getSubscription();
       if (subscribed) {
         console.log("Sudah memiliki subscription:", subscribed);
-        return;
+        return subscribed;
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -74,6 +55,8 @@ const SwRegister = {
         "Berhasil melakukan subscribe dengan endpoint:",
         subscription.endpoint
       );
+
+      return subscription;
     } catch (error) {
       throw new Error(`Subscribe push message gagal: ${error.message}`);
     }

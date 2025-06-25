@@ -2,7 +2,9 @@ import { showFormattedDate } from "../../utils";
 import HomePresenter from "./home-presenter";
 import * as DicodingAPI from "../../data/api";
 import {
-  initNotificationButton,
+  subscribeUserToPushNotifications,
+  unsubscribeUserFromPushNotifications,
+  isUserSubscribed,
   updateNotificationButtonState,
 } from "@/scripts/utils/notification-helper.js";
 
@@ -20,7 +22,7 @@ export default class HomePage {
             class="notification-btn" 
             aria-label="Aktifkan notifikasi">
             <i class="fas fa-bell"></i>
-            <span class="notification-text">Aktifkan Notifikasi</span>
+            <span class="notification-text">Notifikasi</span>
           </button>
         </div>
 
@@ -47,24 +49,19 @@ export default class HomePage {
     const notificationBtn = document.getElementById("notificationBtn");
 
     if (notificationBtn) {
+      updateNotificationButtonState();
+
       notificationBtn.addEventListener("click", async () => {
         try {
-          notificationBtn.disabled = true;
-          notificationBtn.innerHTML =
-            '<i class="fas fa-spinner fa-spin"></i> Mengaktifkan...';
-
-          await initNotificationButton();
-
-          // updateButtonState dipanggil dari dalam initNotificationButton()
-        } catch (error) {
-          console.error("Error:", error);
-          alert("Gagal mengaktifkan notifikasi: " + error.message);
-        } finally {
-          if (Notification.permission !== "granted") {
-            notificationBtn.disabled = false;
-            notificationBtn.innerHTML =
-              '<i class="fas fa-bell"></i> Aktifkan Notifikasi';
+          if (isUserSubscribed()) {
+            await unsubscribeUserFromPushNotifications();
+          } else {
+            await subscribeUserToPushNotifications(); // ✅ ini akan mengirim ke Story API
           }
+          updateNotificationButtonState(); // ⬅️ perbarui tampilan
+        } catch (error) {
+          console.error("Gagal mengelola notifikasi:", error);
+          alert("Terjadi kesalahan saat mengatur notifikasi");
         }
       });
     }
@@ -181,9 +178,7 @@ export default class HomePage {
     const storyItems = stories
       .map((story) => {
         const isSaved = savedPhotos.some((item) => item.id === story.id);
-        const iconSrc = isSaved
-          ? "images/save-full.png"
-          : "images/save.png";
+        const iconSrc = isSaved ? "images/save-full.png" : "images/save.png";
         const iconAlt = isSaved ? "Cerita telah disimpan" : "Simpan cerita";
         const ariaLabel = isSaved
           ? `Cerita ${story.name} telah disimpan`

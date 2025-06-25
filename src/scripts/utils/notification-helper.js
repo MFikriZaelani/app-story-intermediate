@@ -10,29 +10,24 @@ export function isPushNotificationSupported() {
 }
 
 export async function requestNotificationPermission() {
-  if (!isPushNotificationSupported()) {
-    showFloatingMessage(
-      "Push notifications are not supported in this browser."
-    );
-    return {
-      error: true,
-      message: "Push notifications not supported in this browser",
-    };
-  }
-
   try {
     const permission = await Notification.requestPermission();
 
     if (permission === "denied") {
-      showFloatingMessage("Notifikasi ditolak oleh pengguna.");
+      showFloatingMessage("🚫 Notifikasi ditolak oleh pengguna.", "error");
     } else if (permission === "default") {
-      showFloatingMessage("Permintaan notifikasi ditutup tanpa aksi.");
+      showFloatingMessage(
+        "⚠️ Permintaan notifikasi ditutup tanpa aksi.",
+        "warning"
+      );
+    } else if (permission === "granted") {
+      showFloatingMessage("✅ Notifikasi berhasil diaktifkan!", "success");
     }
 
     return { error: false, permission };
   } catch (error) {
     console.error("Error requesting notification permission:", error);
-    showFloatingMessage("Gagal meminta izin notifikasi.");
+    showFloatingMessage("❗ Gagal meminta izin notifikasi.", "error");
     return {
       error: true,
       message: "Failed to request notification permission",
@@ -40,17 +35,19 @@ export async function requestNotificationPermission() {
   }
 }
 
-// Fungsi untuk menampilkan pesan melayang
-function showFloatingMessage(message) {
+export function showFloatingMessage(message, type = "default") {
   const popup = document.createElement("div");
   popup.textContent = message;
-  popup.setAttribute("style", "font-family: 'Bitter', serif;");
-  popup.className =
-    "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300";
+
+  let bgColor = "bg-gray";
+  if (type === "error") bgColor = "bg-red";
+  if (type === "success") bgColor = "bg-green";
+  if (type === "warning") bgColor = "bg-yellow";
+
+  popup.className = `popup-notif ${bgColor}`;
 
   document.body.appendChild(popup);
 
-  // Hilangkan setelah 4 detik
   setTimeout(() => {
     popup.classList.add("opacity-0");
     setTimeout(() => popup.remove(), 300);
@@ -115,10 +112,6 @@ export async function registerServiceWorker() {
   }
 }
 
-//
-
-//
-
 export async function subscribeUserToPushNotifications() {
   try {
     const permissionResult = await requestNotificationPermission();
@@ -140,17 +133,16 @@ export async function subscribeUserToPushNotifications() {
 
     let subscription = await registration.pushManager.getSubscription();
 
-    if (subscription) {
-      return { error: false, subscription };
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertBase64ToUint8Array(
+          config.VAPID_PUBLIC_KEY
+        ),
+      });
     }
 
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: convertBase64ToUint8Array(config.VAPID_PUBLIC_KEY),
-    });
-
     const response = await subscribeNotification(subscription);
-
     if (response.error) {
       return {
         error: true,
@@ -221,7 +213,6 @@ export function initNotificationButton() {
           notificationContainer.classList.add("notification-inactive");
         }
       } else {
-        // User is not subscribed, so subscribe
         const result = await subscribeUserToPushNotifications();
         if (!result.error) {
           notificationContainer.textContent = "Notif On";
@@ -268,24 +259,32 @@ class NotificationHelper {
 
     if (!notificationBtn) return;
 
-    try {
-      const permission = await Notification.requestPermission();
-      notificationBtn.classList.toggle("active", permission === "granted");
+    this.updateButtonState(notificationBtn);
 
-      notificationBtn.addEventListener("click", async () => {
-        try {
-          await this.init();
-          notificationBtn.classList.add("active");
-        } catch (error) {
-          console.error("Gagal mengaktifkan notifikasi:", error);
-          alert(
-            "Gagal mengaktifkan notifikasi. Pastikan izin notifikasi diaktifkan."
+    notificationBtn.addEventListener("click", async () => {
+      try {
+        const result = isUserSubscribed()
+          ? await unsubscribeUserFromPushNotifications()
+          : await subscribeUserToPushNotifications();
+
+        this.updateButtonState(notificationBtn);
+
+        if (!result.error) {
+          showFloatingMessage(
+            result.message || "Sukses memperbarui notifikasi",
+            "success"
+          );
+        } else {
+          showFloatingMessage(
+            result.message || "Gagal memperbarui notifikasi",
+            "error"
           );
         }
-      });
-    } catch (error) {
-      console.error("Error initializing notification button:", error);
-    }
+      } catch (error) {
+        console.error("Gagal memproses notifikasi:", error);
+        showFloatingMessage("Terjadi kesalahan pada notifikasi", "error");
+      }
+    });
   }
 
   static updateButtonState(button) {
@@ -299,7 +298,7 @@ class NotificationHelper {
       return;
     }
 
-    if (permission === "granted") {
+    if (permission === "granted" && isUserSubscribed()) {
       button.classList.add("active");
       textSpan.textContent = "Notifikasi Aktif";
     } else {
